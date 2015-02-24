@@ -1,0 +1,4 @@
+etc/xivo/dxtora.conf  etc/xivo
+usr/bin/xivo-dxtora  usr/sbin
+usr/bin/dxtorc  usr/bin
+usr/share/doc/dhcp-xtor/dhcpd.conf.example  usr/share/doc/dhcp-xtor
