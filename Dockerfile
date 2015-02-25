@@ -23,13 +23,11 @@ RUN python setup.py install
 
 # Configure environment
 RUN touch /var/log/xivo-dxtora.log
-RUN mkdir -p /etc/xivo-dxtora
 RUN mkdir /var/lib/xivo-dxtora
-RUN cp -a etc/* /etc/xivo-dxtora/
 WORKDIR /root
 
 # Clean
 RUN apt-get clean
 RUN rm -rf /usr/src/dxtora
 
-CMD xivo-dxtora -f -d
+CMD xivo-dxtora -f

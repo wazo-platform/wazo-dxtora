@@ -10,5 +10,7 @@ setup(
     maintainer='Avencall',
     maintainer_email='xivo-users@lists.proformatique.com',
     url='http://www.xivo.io/',
-    license='GPLv3'
+    license='GPLv3',
+    scripts=['bin/xivo-dxtora'],
+    data_files=[('/etc/xivo-dxtora', ['etc/xivo-dxtora/config.conf'])],
 )
