@@ -11,7 +11,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 name=xivo-dxtora
-daemon=/usr/sbin/$name
+daemon=/usr/bin/$name
 rundir=/var/run/
 pidfile=$rundir/xivo-dxtora.pid
 ctlfile=$rundir/xivo-dxtora.ctl
