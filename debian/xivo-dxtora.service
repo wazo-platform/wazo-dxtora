@@ -1,0 +1,12 @@
+[Unit]
+Description=xivo-dxtora server
+ConditionPathExists=!/tmp/xivo-disabled
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/xivo-dxtora
+PIDFile=/var/run/xivo-dxtora.pid
+
+[Install]
+WantedBy=multi-user.target

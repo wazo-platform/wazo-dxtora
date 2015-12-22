@@ -2,3 +2,5 @@
 
 mv_conffile /etc/pf-xivo/dxtora.conf /etc/xivo-dxtora/config.conf 15.04
 mv_conffile /etc/xivo/dxtora.conf    /etc/xivo-dxtora/config.conf 15.04
+
+rm_conffile /etc/init.d/xivo-dxtora 15.20
