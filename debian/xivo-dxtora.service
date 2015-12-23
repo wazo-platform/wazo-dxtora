@@ -1,6 +1,6 @@
 [Unit]
 Description=xivo-dxtora server
-ConditionPathExists=!/tmp/xivo-disabled
+ConditionPathExists=!/var/lib/xivo/disabled
 After=network.target
 
 [Service]
