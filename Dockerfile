@@ -30,4 +30,4 @@ WORKDIR /root
 RUN apt-get clean
 RUN rm -rf /usr/src/dxtora
 
-CMD xivo-dxtora -f
+CMD ["xivo-dxtora", "-f"]
