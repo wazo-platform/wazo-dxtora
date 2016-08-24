@@ -12,9 +12,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 name=xivo-dxtora
 daemon=/usr/bin/$name
-rundir=/var/run/
-pidfile=$rundir/xivo-dxtora.pid
-ctlfile=$rundir/xivo-dxtora.ctl
+pidfile=/var/run/xivo-dxtora/xivo-dxtora.pid
 XIVO_DEFAULT_FILE="/etc/default/xivo"
 
 . /lib/lsb/init-functions
@@ -52,10 +50,10 @@ alive()
 
 case "$1" in
 	start)
-        is_enabled
+		is_enabled
 		log_daemon_msg "Starting" "$name"
 
-		[ ! -d $rundir ] && mkdir $rundir
+		install -d -o xivo-dxtora -g xivo-dxtora /var/run/xivo-dxtora
 
 		umask 022
 		start-stop-daemon --start --quiet --exec $daemon

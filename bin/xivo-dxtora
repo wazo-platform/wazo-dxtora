@@ -1,29 +1,13 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+# Copyright 2010-2016 Avencall
+# SPDX-License-Identifier: GPL-3.0+
 
 """Small daemon program that is used to push DHCP information to a
 provisioning server.
 
 DHCP information is passed to it by the dxtorc application.
 
-"""
-
-__license__ = """
-    Copyright (C) 2010-2011  Avencall
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA..
 """
 
 import errno
@@ -37,12 +21,13 @@ import urlparse
 import socket
 import sys
 
+from xivo.user_rights import change_user
 from xivo.xivo_logging import setup_logging
 
 CONFIG_FILE = '/etc/xivo-dxtora/config.conf'
 LOG_FILE_NAME = '/var/log/xivo-dxtora.log'
-PID_FILE = '/var/run/xivo-dxtora.pid'
-UNIX_SERVER_ADDR = '/var/run/xivo-dxtora.ctl'
+PID_FILE = '/var/run/xivo-dxtora/xivo-dxtora.pid'
+UNIX_SERVER_ADDR = '/var/run/xivo-dxtora/xivo-dxtora.ctl'
 PROV_MIME_TYPE = 'application/vnd.proformatique.provd+json'
 
 logger = logging.getLogger('xivo-dxtora')
@@ -330,7 +315,8 @@ class PidFile(object):
 def _read_config_default():
     return {'general':
                 {'retries': 0,
-                 'foreground': False},
+                 'foreground': False,
+                 'user': 'xivo-dxtora'},
             'prov_server':
                 {'username': 'admin',
                  'password': 'admin'}}
@@ -446,6 +432,11 @@ def main():
 
     username = config['prov_server'].get('username')
     password = config['prov_server'].get('password')
+
+    user = config['general']['user']
+    if user:
+        change_user(user)
+
     sink = ProvServerDHCPInfoSink(base_uri, username, password)
     try:
         if not config['general']['foreground']:
