@@ -14,7 +14,7 @@ To install docker on Linux :
 
 To build the image, simply invoke
 
-    docker build -t xivo-dxtora github.com/xivo-pbx/xivo-dxtora
+    docker build -t xivo-dxtora github.com/wazo-pbx/xivo-dxtora
 
 Or directly in the sources in contribs/docker
 
