@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 from distutils.core import setup
 
@@ -8,7 +8,7 @@ setup(
     version='0.1',
     description='XIVO dxtora daemon',
     author='Wazo Authors',
-    author_email='dev.wazo@gmail.com',
+    author_email='dev@wazo.community',
     url='http://wazo.community',
     license='GPLv3',
     scripts=['bin/xivo-dxtora'],

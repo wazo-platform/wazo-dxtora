@@ -1,7 +1,7 @@
 Source: xivo-dxtora
 Section: python
 Priority: extra
-Maintainer: Wazo Maintainers <dev.wazo@gmail.com>
+Maintainer: Wazo Maintainers <dev@wazo.community>
 Build-Depends: debhelper (>= 9), dh-python, dh-systemd (>= 1.5), python-all (>= 2.7), python-setuptools
 Standards-Version: 3.9.6
 X-Python-Version: >= 2.7
@@ -10,9 +10,6 @@ Package: xivo-dxtora
 Architecture: all
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, xivo-lib-python
-Provides: pf-xivo-dxtora
-Conflicts: pf-xivo-dxtora
-Replaces: pf-xivo-dxtora
 Description: Wazo dhcp extractor agent
  Wazo is a system based on a powerful IPBX, to bring an easy to
  install solution for telephony and related services.
