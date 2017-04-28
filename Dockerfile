@@ -25,7 +25,8 @@ RUN mkdir /var/lib/xivo-dxtora \
     && touch /var/log/xivo-dxtora.log \
     && adduser --quiet --system --group --no-create-home xivo-dxtora \
     && chown xivo-dxtora:xivo-dxtora /var/log/xivo-dxtora.log \
-    && install -d -o xivo-dxtora -g xivo-dxtora /var/run/xivo-dxtora
+    && install -d -o xivo-dxtora -g xivo-dxtora /var/run/xivo-dxtora \
+    && cp -r etc/xivo-dxtora /etc
 
 # Clean
 WORKDIR /root
