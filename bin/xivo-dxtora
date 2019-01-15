@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-# Copyright 2010-2016 Avencall
+# Copyright 2010-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 """Small daemon program that is used to push DHCP information to a
@@ -71,13 +71,9 @@ class ProvServerDHCPInfoSink(object):
     Send the DHCP information to a provisioning server via its REST API.
 
     """
-    def __init__(self, base_uri, username=None, password=None):
+    def __init__(self, base_uri):
         handlers = []
-        if username and password:
-            pwd_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            pwd_manager.add_password(None, base_uri, username, password)
-            digest_handler = urllib2.HTTPDigestAuthHandler(pwd_manager)
-            handlers.append(digest_handler)
+
         self._opener = urllib2.build_opener(*handlers)
         self._base_uri = base_uri
         self._resource_uri = None
@@ -318,8 +314,7 @@ def _read_config_default():
                  'foreground': False,
                  'user': 'xivo-dxtora'},
             'prov_server':
-                {'username': 'admin',
-                 'password': 'admin'}}
+                {'verify_certificate': '/usr/share/xivo-certs/server.crt'}}
 
 
 def _read_config_from_file(filename):
@@ -344,8 +339,6 @@ def _read_config_from_file(filename):
 
 def _read_config_from_commandline():
     parser = optparse.OptionParser()
-    parser.add_option('-u', '--user', dest='user',
-                      help='user name and password for server authentication')
     parser.add_option('-f', '--foreground', action='store_true', dest='foreground',
                       help="don't daemonize")
     opt, args = parser.parse_args()
@@ -353,10 +346,6 @@ def _read_config_from_commandline():
     result = {'general': {}, 'prov_server': {}}
     if opt.foreground:
         result['general']['foreground'] = opt.foreground
-    if opt.user:
-        user, passwd = opt.user.split(':', 1)
-        result['prov_server']['username'] = user
-        result['prov_server']['password'] = passwd
     if len(args) >= 1:
         result['prov_server']['dev_mgr_uri'] = args[0]
     return result
@@ -430,14 +419,11 @@ def main():
         sys.exit(1)
     base_uri = config['prov_server']['dev_mgr_uri']
 
-    username = config['prov_server'].get('username')
-    password = config['prov_server'].get('password')
-
     user = config['general']['user']
     if user:
         change_user(user)
 
-    sink = ProvServerDHCPInfoSink(base_uri, username, password)
+    sink = ProvServerDHCPInfoSink(base_uri)
     try:
         if not config['general']['foreground']:
             _daemonize()
