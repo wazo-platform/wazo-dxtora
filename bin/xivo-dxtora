@@ -30,6 +30,8 @@ CONFIG_FILE = '/etc/xivo-dxtora/config.conf'
 LOG_FILE_NAME = '/var/log/xivo-dxtora.log'
 PID_FILE = '/var/run/xivo-dxtora/xivo-dxtora.pid'
 UNIX_SERVER_ADDR = '/var/run/xivo-dxtora/xivo-dxtora.ctl'
+CERT_FILE = '/usr/share/xivo-certs/server.crt'
+WAZO_AUTH_KEY_FILE = '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml'
 
 logger = logging.getLogger('xivo-dxtora')
 
@@ -283,13 +285,13 @@ def _read_config_default():
             'host': 'localhost',
             'port': 8666,
             'prefix': '/provd',
-            'verify_certificate': '/usr/share/xivo-certs/server.crt',
+            'verify_certificate': CERT_FILE,
         },
         'auth': {
             'host': 'localhost',
             'port': 9497,
-            'verify_certificate': '/usr/share/xivo-certs/server.crt',
-            'key_file': '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml',
+            'verify_certificate': CERT_FILE,
+            'key_file': WAZO_AUTH_KEY_FILE,
         }
     }
 
