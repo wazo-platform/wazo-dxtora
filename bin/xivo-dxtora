@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-# Copyright 2010-2016 Avencall
-# SPDX-License-Identifier: GPL-3.0+
+# Copyright 2010-2019 The Wazo Authors  (see the AUTHORS file)
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 """Small daemon program that is used to push DHCP information to a
 provisioning server.
@@ -11,16 +11,18 @@ DHCP information is passed to it by the dxtorc application.
 """
 
 import errno
-import json
 import ConfigParser
 import logging
 import optparse
 import os
-import urllib2
-import urlparse
 import socket
 import sys
 
+from wazo_provd_client import Client as ProvdClient
+from wazo_provd_client.exceptions import ProvdError
+from xivo_auth_client import Client as AuthClient
+from xivo.config_helper import parse_config_file
+from xivo.token_renewer import TokenRenewer
 from xivo.user_rights import change_user
 from xivo.xivo_logging import setup_logging
 
@@ -28,7 +30,8 @@ CONFIG_FILE = '/etc/xivo-dxtora/config.conf'
 LOG_FILE_NAME = '/var/log/xivo-dxtora.log'
 PID_FILE = '/var/run/xivo-dxtora/xivo-dxtora.pid'
 UNIX_SERVER_ADDR = '/var/run/xivo-dxtora/xivo-dxtora.ctl'
-PROV_MIME_TYPE = 'application/vnd.proformatique.provd+json'
+CERT_FILE = '/usr/share/xivo-certs/server.crt'
+WAZO_AUTH_KEY_FILE = '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml'
 
 logger = logging.getLogger('xivo-dxtora')
 
@@ -71,60 +74,20 @@ class ProvServerDHCPInfoSink(object):
     Send the DHCP information to a provisioning server via its REST API.
 
     """
-    def __init__(self, base_uri, username=None, password=None):
-        handlers = []
-        if username and password:
-            pwd_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            pwd_manager.add_password(None, base_uri, username, password)
-            digest_handler = urllib2.HTTPDigestAuthHandler(pwd_manager)
-            handlers.append(digest_handler)
-        self._opener = urllib2.build_opener(*handlers)
-        self._base_uri = base_uri
-        self._resource_uri = None
+    def __init__(self, provd_client):
+        self._provd_client = provd_client
 
     def close(self):
         pass
 
-    def _update_resource_uri(self):
-        headers = {'Accept': PROV_MIME_TYPE}
-        request = urllib2.Request(self._base_uri, headers=headers)
-        f = self._opener.open(request)
-        try:
-            content = json.load(f)
-        finally:
-            f.close()
-
-        links = content['links']
-        for link in links:
-            if link['rel'] == 'dev.dhcpinfo':
-                self._resource_uri = urlparse.urljoin(self._base_uri, link['href'])
-                break
-        else:
-            raise DHCPInfoSinkError('no link to DHCP info resource on base resource')
-
-    def _do_push(self, dhcp_info, retry_on_404=True):
-        if self._resource_uri is None:
-            self._update_resource_uri()
-        headers = {'Accept': '*/*', 'Content-Type': PROV_MIME_TYPE}
-        content = json.dumps({'dhcp_info': dhcp_info})
-        request = urllib2.Request(self._resource_uri, content, headers=headers)
-        try:
-            f = self._opener.open(request)
-            f.read()
-            f.close()
-        except urllib2.HTTPError, e:
-            code = e.code
-            if code == 404 and retry_on_404:
-                self._update_resource_uri()
-                self._do_push(dhcp_info, False)
-            else:
-                raise
+    def _do_push(self, dhcp_info):
+        self._provd_client.devices.create_from_dhcp(dhcp_info)
 
     def push(self, dhcp_info):
         logger.info('Pushing DHCP info to prov server')
         try:
             self._do_push(dhcp_info)
-        except DHCPInfoSinkError:
+        except ProvdError:
             raise
         except Exception, e:
             # XXX we are wrapping a bit too much
@@ -247,7 +210,7 @@ class Agent(object):
             except DHCPInfoSourceError, e:
                 logger.error('Error while pulling info from source: %s', e)
             except DHCPInfoSinkError, e:
-                logger.error('Error while pushing info to sink: %s', e)
+                logger.error('Error while pushing info to sink: %s', e.message)
             except Exception, e:
                 logger.exception('Unspecified exception')
 
@@ -313,13 +276,24 @@ class PidFile(object):
 
 
 def _read_config_default():
-    return {'general':
-                {'retries': 0,
-                 'foreground': False,
-                 'user': 'xivo-dxtora'},
-            'prov_server':
-                {'username': 'admin',
-                 'password': 'admin'}}
+    return {
+        'general': {
+            'foreground': False,
+            'user': 'xivo-dxtora',
+        },
+        'prov_server': {
+            'host': 'localhost',
+            'port': 8666,
+            'prefix': '/provd',
+            'verify_certificate': CERT_FILE,
+        },
+        'auth': {
+            'host': 'localhost',
+            'port': 9497,
+            'verify_certificate': CERT_FILE,
+            'key_file': WAZO_AUTH_KEY_FILE,
+        }
+    }
 
 
 def _read_config_from_file(filename):
@@ -330,35 +304,36 @@ def _read_config_from_file(filename):
     finally:
         fobj.close()
 
-    result = {'general': {}, 'prov_server': {}}
+    result = {'general': {}, 'prov_server': {}, 'auth': {}}
     def _get(section, option, getname='get'):
         if config.has_option(section, option):
             getfun = getattr(config, getname)
             result[section][option] = getfun(section, option)
-    _get('general', 'retries', 'getint')
-    _get('prov_server', 'dev_mgr_uri')
-    _get('prov_server', 'username')
-    _get('prov_server', 'password')
+    _get('general', 'user')
+    _get('general', 'foreground', 'getboolean')
+    _get('prov_server', 'verify_certificate')
+    _get('prov_server', 'host')
+    _get('prov_server', 'https', 'getboolean')
+    _get('prov_server', 'port', 'getint')
+    _get('prov_server', 'prefix')
+    _get('auth', 'host')
+    _get('auth', 'port', 'getint')
+    _get('auth', 'verify_certificate')
+    _get('auth', 'key_file')
     return result
 
 
 def _read_config_from_commandline():
     parser = optparse.OptionParser()
-    parser.add_option('-u', '--user', dest='user',
-                      help='user name and password for server authentication')
     parser.add_option('-f', '--foreground', action='store_true', dest='foreground',
                       help="don't daemonize")
     opt, args = parser.parse_args()
 
-    result = {'general': {}, 'prov_server': {}}
+    result = {'general': {}, 'prov_server': {}, 'auth': {}}
     if opt.foreground:
         result['general']['foreground'] = opt.foreground
-    if opt.user:
-        user, passwd = opt.user.split(':', 1)
-        result['prov_server']['username'] = user
-        result['prov_server']['password'] = passwd
     if len(args) >= 1:
-        result['prov_server']['dev_mgr_uri'] = args[0]
+        result['prov_server']['host'] = args[0]
     return result
 
 
@@ -369,6 +344,11 @@ def _read_config(filename):
             config[key].update(new_config[key])
     _update(_read_config_from_file(filename))
     _update(_read_config_from_commandline())
+
+    key_file = parse_config_file(config['auth'].pop('key_file'))
+    config['auth']['username'] = key_file.get('service_id')
+    config['auth']['password'] = key_file.get('service_key')
+
     return config
 
 
@@ -418,46 +398,61 @@ def _sig_handler(signum, frame):
     raise SystemExit()
 
 
+def _bool(value):
+    true_values = ['True', 'true', '1']
+    false_values = ['False', 'false', '0']
+    if value in true_values:
+        return True
+    if value in false_values:
+        return False
+    return value
+
+
 def main():
     import signal
 
     config = _read_config(CONFIG_FILE)
+    config['auth']['verify_certificate'] = _bool(config['auth']['verify_certificate'])
+    config['prov_server']['verify_certificate'] = _bool(config['prov_server']['verify_certificate'])
 
     setup_logging(LOG_FILE_NAME, config['general']['foreground'], debug=False)
 
-    if 'dev_mgr_uri' not in config['prov_server']:
-        logger.error('error: no device manager URI specified. Exiting.')
+    if 'host' not in config['prov_server']:
+        logger.error('error: no provd host specified. Exiting.')
         sys.exit(1)
-    base_uri = config['prov_server']['dev_mgr_uri']
-
-    username = config['prov_server'].get('username')
-    password = config['prov_server'].get('password')
 
     user = config['general']['user']
     if user:
         change_user(user)
 
-    sink = ProvServerDHCPInfoSink(base_uri, username, password)
-    try:
-        if not config['general']['foreground']:
-            _daemonize()
-        pidfile = PidFile(PID_FILE)
+    auth_client = AuthClient(**config['auth'])
+    provd_client = ProvdClient(**config['prov_server'])
+    token_renewer = TokenRenewer(auth_client)
+    token_renewer.subscribe_to_token_change(provd_client.set_token)
+
+    sink = ProvServerDHCPInfoSink(provd_client)
+
+    with token_renewer:
         try:
-            source = UnixSocketDHCPInfoSource(UNIX_SERVER_ADDR, True)
+            if not config['general']['foreground']:
+                _daemonize()
+            pidfile = PidFile(PID_FILE)
             try:
-                signum = signal.SIGTERM
-                old_handler = signal.signal(signum, _sig_handler)
+                source = UnixSocketDHCPInfoSource(UNIX_SERVER_ADDR, True)
                 try:
-                    agent = Agent(source, sink)
-                    agent.run()
+                    signum = signal.SIGTERM
+                    old_handler = signal.signal(signum, _sig_handler)
+                    try:
+                        agent = Agent(source, sink)
+                        agent.run()
+                    finally:
+                        signal.signal(signum, old_handler)
                 finally:
-                    signal.signal(signum, old_handler)
+                    source.close()
             finally:
-                source.close()
+                pidfile.close()
         finally:
-            pidfile.close()
-    finally:
-        sink.close()
+            sink.close()
 
 
 if __name__ == '__main__':

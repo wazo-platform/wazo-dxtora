@@ -15,6 +15,9 @@ case "$1" in
 					$USER
 		fi
 
+		# Necessary to access certificates
+		adduser --quiet $USER www-data
+
 		if [ ! -e "$LOG_FILENAME" ]; then
 			touch "$LOG_FILENAME"
 		fi
