@@ -11,29 +11,50 @@ DHCP information is passed to it by the dxtorc application.
 """
 
 import errno
-import ConfigParser
 import logging
 import optparse
 import os
+import signal
 import socket
 import sys
 
-from wazo_provd_client import Client as ProvdClient
-from wazo_provd_client.exceptions import ProvdError
-from xivo_auth_client import Client as AuthClient
-from xivo.config_helper import parse_config_file
+from xivo.chain_map import ChainMap
+from xivo.config_helper import parse_config_file, read_config_file_hierarchy
 from xivo.token_renewer import TokenRenewer
 from xivo.user_rights import change_user
 from xivo.xivo_logging import setup_logging
+from xivo_auth_client import Client as AuthClient
 
-CONFIG_FILE = '/etc/xivo-dxtora/config.conf'
-LOG_FILE_NAME = '/var/log/xivo-dxtora.log'
-PID_FILE = '/var/run/xivo-dxtora/xivo-dxtora.pid'
-UNIX_SERVER_ADDR = '/var/run/xivo-dxtora/xivo-dxtora.ctl'
+from wazo_provd_client import Client as ProvdClient
+from wazo_provd_client.exceptions import ProvdError
+
 CERT_FILE = '/usr/share/xivo-certs/server.crt'
-WAZO_AUTH_KEY_FILE = '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml'
 
 logger = logging.getLogger('xivo-dxtora')
+
+
+DEFAULT_CONFIG = {
+    'debug': False,
+    'config_file': '/etc/xivo-dxtora/config.yml',
+    'extra_config_files': '/etc/xivo-dxtora/conf.d/',
+    'log_filename': '/var/log/xivo-dxtora.log',
+    'pid_filename': '/var/run/xivo-dxtora/xivo-dxtora.pid',
+    'unix_server_addr': '/var/run/xivo-dxtora/xivo-dxtora.ctl',
+    'foreground': False,
+    'user': 'xivo-dxtora',
+    'prov_server': {
+        'host': 'localhost',
+        'port': 8666,
+        'prefix': '/provd',
+        'verify_certificate': CERT_FILE,
+    },
+    'auth': {
+        'host': 'localhost',
+        'port': 9497,
+        'verify_certificate': CERT_FILE,
+        'key_file': '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml',
+    }
+}
 
 
 class DHCPInfoSourceError(Exception):
@@ -275,81 +296,31 @@ class PidFile(object):
         self._remove_pid_file()
 
 
-def _read_config_default():
-    return {
-        'general': {
-            'foreground': False,
-            'user': 'xivo-dxtora',
-        },
-        'prov_server': {
-            'host': 'localhost',
-            'port': 8666,
-            'prefix': '/provd',
-            'verify_certificate': CERT_FILE,
-        },
-        'auth': {
-            'host': 'localhost',
-            'port': 9497,
-            'verify_certificate': CERT_FILE,
-            'key_file': WAZO_AUTH_KEY_FILE,
-        }
-    }
-
-
-def _read_config_from_file(filename):
-    config = ConfigParser.RawConfigParser()
-    fobj = open(filename)
-    try:
-        config.readfp(fobj)
-    finally:
-        fobj.close()
-
-    result = {'general': {}, 'prov_server': {}, 'auth': {}}
-    def _get(section, option, getname='get'):
-        if config.has_option(section, option):
-            getfun = getattr(config, getname)
-            result[section][option] = getfun(section, option)
-    _get('general', 'user')
-    _get('general', 'foreground', 'getboolean')
-    _get('prov_server', 'verify_certificate')
-    _get('prov_server', 'host')
-    _get('prov_server', 'https', 'getboolean')
-    _get('prov_server', 'port', 'getint')
-    _get('prov_server', 'prefix')
-    _get('auth', 'host')
-    _get('auth', 'port', 'getint')
-    _get('auth', 'verify_certificate')
-    _get('auth', 'key_file')
-    return result
-
-
 def _read_config_from_commandline():
     parser = optparse.OptionParser()
     parser.add_option('-f', '--foreground', action='store_true', dest='foreground',
                       help="don't daemonize")
     opt, args = parser.parse_args()
 
-    result = {'general': {}, 'prov_server': {}, 'auth': {}}
+    result = {'prov_server': {}, 'auth': {}}
     if opt.foreground:
-        result['general']['foreground'] = opt.foreground
+        result['foreground'] = opt.foreground
     if len(args) >= 1:
         result['prov_server']['host'] = args[0]
     return result
 
 
-def _read_config(filename):
-    config = _read_config_default()
-    def _update(new_config):
-        for key in config:
-            config[key].update(new_config[key])
-    _update(_read_config_from_file(filename))
-    _update(_read_config_from_commandline())
+def _read_config():
+    cli_config = _read_config_from_commandline()
+    file_config = read_config_file_hierarchy(ChainMap(cli_config, DEFAULT_CONFIG))
+    service_key = _load_key_file(ChainMap(cli_config, file_config, DEFAULT_CONFIG))
+    return ChainMap(cli_config, service_key, file_config, DEFAULT_CONFIG)
 
-    key_file = parse_config_file(config['auth'].pop('key_file'))
-    config['auth']['username'] = key_file.get('service_id')
-    config['auth']['password'] = key_file.get('service_key')
 
-    return config
+def _load_key_file(config):
+    key_file = parse_config_file(config['auth']['key_file'])
+    return {'auth': {'username': key_file.get('service_id'),
+                     'password': key_file.get('service_key')}}
 
 
 def _remove(file):
@@ -369,30 +340,16 @@ def _sig_handler(signum, frame):
     raise SystemExit()
 
 
-def _bool(value):
-    true_values = ['True', 'true', '1']
-    false_values = ['False', 'false', '0']
-    if value in true_values:
-        return True
-    if value in false_values:
-        return False
-    return value
-
-
 def main():
-    import signal
+    config = _read_config()
 
-    config = _read_config(CONFIG_FILE)
-    config['auth']['verify_certificate'] = _bool(config['auth']['verify_certificate'])
-    config['prov_server']['verify_certificate'] = _bool(config['prov_server']['verify_certificate'])
-
-    setup_logging(LOG_FILE_NAME, config['general']['foreground'], debug=False)
+    setup_logging(config['log_filename'], config['foreground'], debug=config['debug'])
 
     if 'host' not in config['prov_server']:
         logger.error('error: no provd host specified. Exiting.')
         sys.exit(1)
 
-    user = config['general']['user']
+    user = config['user']
     if user:
         change_user(user)
 
@@ -400,14 +357,13 @@ def main():
     provd_client = ProvdClient(**config['prov_server'])
     token_renewer = TokenRenewer(auth_client)
     token_renewer.subscribe_to_token_change(provd_client.set_token)
-
     sink = ProvServerDHCPInfoSink(provd_client)
 
     with token_renewer:
         try:
-            pidfile = PidFile(PID_FILE)
+            pidfile = PidFile(config['pid_filename'])
             try:
-                source = UnixSocketDHCPInfoSource(UNIX_SERVER_ADDR, True)
+                source = UnixSocketDHCPInfoSource(config['unix_server_addr'], True)
                 try:
                     signum = signal.SIGTERM
                     old_handler = signal.signal(signum, _sig_handler)
