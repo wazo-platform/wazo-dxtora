@@ -364,35 +364,6 @@ def _remove(file):
             pass
 
 
-def _daemonize():
-    try:
-        pid = os.fork()
-        if pid != 0:
-            os._exit(0)
-    except OSError, e:
-        logger.exception("first fork() failed: %d (%s)", e.errno, e.strerror)
-        sys.exit(1)
-
-    os.chdir("/")
-    os.setsid()
-    os.umask(0)
-
-    try:
-        pid = os.fork()
-        if pid != 0:
-            os._exit(0)
-    except OSError, e:
-        logger.exception("second fork() failed: %d (%s)", e.errno, e.strerror)
-        sys.exit(1)
-
-    devnull_fd = os.open(os.devnull, os.O_RDWR)
-    try:
-        for fd in (0, 1, 2):
-            os.dup2(devnull_fd, fd)
-    finally:
-        os.close(devnull_fd)
-
-
 def _sig_handler(signum, frame):
     logger.info('Received signal, exiting.')
     raise SystemExit()
@@ -434,8 +405,6 @@ def main():
 
     with token_renewer:
         try:
-            if not config['general']['foreground']:
-                _daemonize()
             pidfile = PidFile(PID_FILE)
             try:
                 source = UnixSocketDHCPInfoSource(UNIX_SERVER_ADDR, True)

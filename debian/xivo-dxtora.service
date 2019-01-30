@@ -4,7 +4,6 @@ ConditionPathExists=!/var/lib/xivo/disabled
 After=network.target
 
 [Service]
-Type=forking
 ExecStartPre=/usr/bin/install -d -o xivo-dxtora -g xivo-dxtora /var/run/xivo-dxtora
 ExecStart=/usr/bin/xivo-dxtora
 PIDFile=/var/run/xivo-dxtora/xivo-dxtora.pid
