@@ -40,7 +40,6 @@ DEFAULT_CONFIG = {
     'log_filename': '/var/log/xivo-dxtora.log',
     'pid_filename': '/var/run/xivo-dxtora/xivo-dxtora.pid',
     'unix_server_addr': '/var/run/xivo-dxtora/xivo-dxtora.ctl',
-    'foreground': False,
     'user': 'xivo-dxtora',
     'prov_server': {
         'host': 'localhost',
@@ -298,13 +297,9 @@ class PidFile(object):
 
 def _read_config_from_commandline():
     parser = optparse.OptionParser()
-    parser.add_option('-f', '--foreground', action='store_true', dest='foreground',
-                      help="don't daemonize")
     opt, args = parser.parse_args()
 
     result = {'prov_server': {}, 'auth': {}}
-    if opt.foreground:
-        result['foreground'] = opt.foreground
     if len(args) >= 1:
         result['prov_server']['host'] = args[0]
     return result
@@ -343,7 +338,7 @@ def _sig_handler(signum, frame):
 def main():
     config = _read_config()
 
-    setup_logging(config['log_filename'], config['foreground'], debug=config['debug'])
+    setup_logging(config['log_filename'], foreground=True, debug=config['debug'])
 
     if 'host' not in config['prov_server']:
         logger.error('error: no provd host specified. Exiting.')
