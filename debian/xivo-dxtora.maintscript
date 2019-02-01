@@ -1,0 +1,3 @@
+# see: dh_installdeb(1)
+
+rm_conffile /etc/xivo-dxtora/config.conf 19.03
