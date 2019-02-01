@@ -1,0 +1,8 @@
+prov_server:
+  host: localhost
+  port: 8666
+  verify_certificate: /usr/share/xivo-certs/server.crt
+auth:
+  host: localhost
+  port: 9497
+  verify_certificate: /usr/share/xivo-certs/server.crt
