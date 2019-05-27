@@ -44,7 +44,6 @@ DEFAULT_CONFIG = {
     'prov_server': {
         'host': 'localhost',
         'port': 8666,
-        'prefix': '/provd',
         'verify_certificate': CERT_FILE,
     },
     'auth': {
