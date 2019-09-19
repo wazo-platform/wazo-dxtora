@@ -1,4 +1,4 @@
-/var/log/xivo-dxtora.log {
+/var/log/wazo-dxtora.log {
     daily
     rotate 15
     compress

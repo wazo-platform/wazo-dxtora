@@ -1,3 +1,9 @@
+wazo-dxtora (19.14~20190920) wazo-dev-buster; urgency=medium
+
+  * Rename to wazo-dxtora
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 20 Sep 2019 09:54:13 -0400
+
 xivo-dxtora (15.04~20140318.155859.ca890eb) xivo-dev; urgency=low
 
   * Initial release.
