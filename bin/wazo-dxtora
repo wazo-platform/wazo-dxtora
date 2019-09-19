@@ -30,17 +30,17 @@ from wazo_provd_client.exceptions import ProvdError
 
 CERT_FILE = '/usr/share/xivo-certs/server.crt'
 
-logger = logging.getLogger('xivo-dxtora')
+logger = logging.getLogger('wazo-dxtora')
 
 
 DEFAULT_CONFIG = {
     'debug': False,
-    'config_file': '/etc/xivo-dxtora/config.yml',
-    'extra_config_files': '/etc/xivo-dxtora/conf.d/',
-    'log_filename': '/var/log/xivo-dxtora.log',
-    'pid_filename': '/var/run/xivo-dxtora/xivo-dxtora.pid',
-    'unix_server_addr': '/var/run/xivo-dxtora/xivo-dxtora.ctl',
-    'user': 'xivo-dxtora',
+    'config_file': '/etc/wazo-dxtora/config.yml',
+    'extra_config_files': '/etc/wazo-dxtora/conf.d/',
+    'log_filename': '/var/log/wazo-dxtora.log',
+    'pid_filename': '/var/run/wazo-dxtora/wazo-dxtora.pid',
+    'unix_server_addr': '/var/run/wazo-dxtora/wazo-dxtora.ctl',
+    'user': 'wazo-dxtora',
     'prov_server': {
         'host': 'localhost',
         'port': 8666,
@@ -50,7 +50,7 @@ DEFAULT_CONFIG = {
         'host': 'localhost',
         'port': 9497,
         'verify_certificate': CERT_FILE,
-        'key_file': '/var/lib/wazo-auth-keys/xivo-dxtora-key.yml',
+        'key_file': '/var/lib/wazo-auth-keys/wazo-dxtora-key.yml',
     }
 }
 

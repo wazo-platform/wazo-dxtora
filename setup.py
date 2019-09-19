@@ -4,12 +4,12 @@
 from setuptools import setup
 
 setup(
-    name='xivo-dxtora',
+    name='wazo-dxtora',
     version='0.2',
-    description='XIVO dxtora daemon',
+    description='Wazo dxtora daemon',
     author='Wazo Authors',
     author_email='dev@wazo.community',
     url='http://wazo.community',
     license='GPLv3',
-    scripts=['bin/xivo-dxtora'],
+    scripts=['bin/wazo-dxtora'],
 )
