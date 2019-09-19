@@ -1,38 +1,38 @@
-Dockerfile for XiVO dxtora
+Dockerfile for Wazo dxtora
 
 ## Install Docker
 
 To install docker on Linux :
 
     curl -sL https://get.docker.io/ | sh
- 
+
  or
- 
+
      wget -qO- https://get.docker.io/ | sh
 
 ## Build
 
 To build the image, simply invoke
 
-    docker build -t xivo-dxtora github.com/wazo-pbx/xivo-dxtora
+    docker build -t wazo-dxtora github.com/wazo-pbx/wazo-dxtora
 
 Or directly in the sources in contribs/docker
 
-    docker build -t xivo-dxtora .
-  
+    docker build -t wazo-dxtora .
+
 ## Usage
 
 To run the container, do the following:
 
-    docker run -d -v /conf/dxtora:/etc/xivo-dxtora/ xivo-dxtora
+    docker run -d -v /conf/dxtora:/etc/wazo-dxtora/ wazo-dxtora
 
 On interactive mode :
 
-    docker run -v /conf/dxtora:/etc/xivo-dxtora -it xivo-dxtora bash
+    docker run -v /conf/dxtora:/etc/wazo-dxtora -it wazo-dxtora bash
 
-After launch xivo-dxtora.
+After launch wazo-dxtora.
 
-    xivo-dxtora -f -d
+    wazo-dxtora -f -d
 
 ## Infos
 
