@@ -14,23 +14,23 @@ RUN apt-get -qq -y install \
     python-pip \
     python-dev
 
-# Install xivo-dxtora
+# Install wazo-dxtora
 ADD . /usr/src/dxtora
 WORKDIR /usr/src/dxtora
 RUN pip install -r requirements.txt
 RUN python setup.py install
 
 # Configure environment
-RUN mkdir /var/lib/xivo-dxtora \
-    && touch /var/log/xivo-dxtora.log \
-    && adduser --quiet --system --group --no-create-home xivo-dxtora \
-    && chown xivo-dxtora:xivo-dxtora /var/log/xivo-dxtora.log \
-    && install -d -o xivo-dxtora -g xivo-dxtora /var/run/xivo-dxtora \
-    && cp -r etc/xivo-dxtora /etc
+RUN mkdir /var/lib/wazo-dxtora \
+    && touch /var/log/wazo-dxtora.log \
+    && adduser --quiet --system --group --no-create-home wazo-dxtora \
+    && chown wazo-dxtora:wazo-dxtora /var/log/wazo-dxtora.log \
+    && install -d -o wazo-dxtora -g wazo-dxtora /var/run/wazo-dxtora \
+    && cp -r etc/wazo-dxtora /etc
 
 # Clean
 WORKDIR /root
 RUN rm -rf /usr/src/dxtora
 RUN apt-get clean
 
-CMD ["xivo-dxtora", "-f"]
+CMD ["wazo-dxtora", "-f"]
