@@ -14,7 +14,7 @@ To install docker on Linux :
 
 To build the image, simply invoke
 
-    docker build -t wazo-dxtora github.com/wazo-pbx/wazo-dxtora
+    docker build -t wazo-dxtora github.com/wazo-platform/wazo-dxtora
 
 Or directly in the sources in contribs/docker
 
