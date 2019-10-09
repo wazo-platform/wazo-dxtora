@@ -19,15 +19,11 @@ case "$1" in
         # Necessary to access certificates
         adduser --quiet $USER www-data
 
-        if [ ! -e "$LOG_FILENAME" ]; then
-            touch "$LOG_FILENAME"
-        fi
-
-        chown "$USER:$USER" "$LOG_FILENAME"
-
         # move files from xivo-dxtora
         if [ -f /var/log/xivo-dxtora.log ] ; then
             rename 's/xivo-dxtora/wazo-dxtora/g' /var/log/xivo-dxtora.log*
+            # Fix a previous version where the wazo-dxtora.log was created before renaming
+            rm -f /var/log/xivo-dxtora.log
         fi
         rm -rf /var/run/xivo-dxtora
         if [ -d /etc/xivo-dxtora/conf.d ] ; then
@@ -42,6 +38,12 @@ case "$1" in
             deluser --quiet --system --remove-home $OLD_USER
         fi
         # End of move files from xivo-dxtora
+
+        if [ ! -e "$LOG_FILENAME" ]; then
+            touch "$LOG_FILENAME"
+        fi
+
+        chown "$USER:$USER" "$LOG_FILENAME"
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
