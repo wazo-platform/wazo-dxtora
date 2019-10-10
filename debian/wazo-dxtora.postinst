@@ -25,7 +25,7 @@ case "$1" in
             # Fix a previous version where the wazo-dxtora.log was created before renaming
             rm -f /var/log/xivo-dxtora.log
         fi
-        rm -rf /var/run/xivo-dxtora
+        rm -rf /run/xivo-dxtora
         if [ -d /etc/xivo-dxtora/conf.d ] ; then
             find /etc/xivo-dxtora/conf.d/ -mindepth 1 -exec mv {} /etc/wazo-dxtora/conf.d/ \;
             rmdir --ignore-fail-on-non-empty -p /etc/xivo-dxtora/conf.d
