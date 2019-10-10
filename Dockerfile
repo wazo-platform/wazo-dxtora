@@ -25,7 +25,7 @@ RUN mkdir /var/lib/wazo-dxtora \
     && touch /var/log/wazo-dxtora.log \
     && adduser --quiet --system --group --no-create-home wazo-dxtora \
     && chown wazo-dxtora:wazo-dxtora /var/log/wazo-dxtora.log \
-    && install -d -o wazo-dxtora -g wazo-dxtora /var/run/wazo-dxtora \
+    && install -d -o wazo-dxtora -g wazo-dxtora /run/wazo-dxtora \
     && cp -r etc/wazo-dxtora /etc
 
 # Clean

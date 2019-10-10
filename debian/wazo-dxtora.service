@@ -4,9 +4,9 @@ ConditionPathExists=!/var/lib/wazo/disabled
 After=network.target
 
 [Service]
-ExecStartPre=/usr/bin/install -d -o wazo-dxtora -g wazo-dxtora /var/run/wazo-dxtora
+ExecStartPre=/usr/bin/install -d -o wazo-dxtora -g wazo-dxtora /run/wazo-dxtora
 ExecStart=/usr/bin/wazo-dxtora
-PIDFile=/var/run/wazo-dxtora/wazo-dxtora.pid
+PIDFile=/run/wazo-dxtora/wazo-dxtora.pid
 
 [Install]
 WantedBy=multi-user.target
