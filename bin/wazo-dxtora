@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-# Copyright 2010-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2010-2020 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Small daemon program that is used to push DHCP information to a
@@ -28,8 +28,6 @@ from wazo_auth_client import Client as AuthClient
 from wazo_provd_client import Client as ProvdClient
 from wazo_provd_client.exceptions import ProvdError
 
-CERT_FILE = '/usr/share/xivo-certs/server.crt'
-
 logger = logging.getLogger('wazo-dxtora')
 
 
@@ -44,12 +42,13 @@ DEFAULT_CONFIG = {
     'prov_server': {
         'host': 'localhost',
         'port': 8666,
-        'verify_certificate': CERT_FILE,
+        'verify_certificate': '/usr/share/xivo-certs/server.crt',
     },
     'auth': {
         'host': 'localhost',
         'port': 9497,
-        'verify_certificate': CERT_FILE,
+        'prefix': None,
+        'https': False,
         'key_file': '/var/lib/wazo-auth-keys/wazo-dxtora-key.yml',
     }
 }
