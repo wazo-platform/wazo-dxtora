@@ -337,7 +337,7 @@ def _sig_handler(signum, frame):
 def main():
     config = _read_config()
 
-    setup_logging(config['log_filename'], foreground=True, debug=config['debug'])
+    setup_logging(config['log_filename'], debug=config['debug'])
 
     if 'host' not in config['prov_server']:
         logger.error('error: no provd host specified. Exiting.')
