@@ -1,7 +1,7 @@
 ## Image to build from sources
 
 FROM debian:buster
-MAINTAINER Wazo Maintainers <dev@wazo.community>
+LABEL maintainer="Wazo Maintainers <dev@wazo.community>"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV HOME /root
@@ -11,14 +11,14 @@ RUN apt-get -qq update
 RUN apt-get -qq -y install \
     git \
     apt-utils \
-    python-pip \
-    python-dev
+    python3-pip \
+    python3-dev
 
 # Install wazo-dxtora
 ADD . /usr/src/dxtora
 WORKDIR /usr/src/dxtora
-RUN pip install -r requirements.txt
-RUN python setup.py install
+RUN pip3 install -r requirements.txt
+RUN python3 setup.py install
 
 # Configure environment
 RUN mkdir /var/lib/wazo-dxtora \
