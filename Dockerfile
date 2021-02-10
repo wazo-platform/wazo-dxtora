@@ -33,4 +33,4 @@ WORKDIR /root
 RUN rm -rf /usr/src/dxtora
 RUN apt-get clean
 
-CMD ["wazo-dxtora", "-f"]
+CMD ["wazo-dxtora"]
