@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # Copyright 2010-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -383,7 +382,3 @@ def main():
                 pidfile.close()
         finally:
             sink.close()
-
-
-if __name__ == '__main__':
-    main()
