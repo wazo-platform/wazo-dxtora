@@ -1,6 +1,4 @@
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
-# Copyright 2010-2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2010-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Small daemon program that is used to push DHCP information to a
@@ -51,17 +49,19 @@ DEFAULT_CONFIG = {
         'prefix': None,
         'https': False,
         'key_file': '/var/lib/wazo-auth-keys/wazo-dxtora-key.yml',
-    }
+    },
 }
 
 
 class DHCPInfoSourceError(Exception):
     """Raised if there's an error while pulling DHCP information."""
+
     pass
 
 
 class DHCPInfoSinkError(Exception):
     """Raised if there's an error while pushing DHCP information."""
+
     pass
 
 
@@ -69,7 +69,7 @@ class PidFileError(Exception):
     pass
 
 
-class StreamDHCPInfoSink(object):
+class StreamDHCPInfoSink:
     """A destination for DHCP information objects.
 
     Write the DHCP information as a string to a file object.
@@ -77,6 +77,7 @@ class StreamDHCPInfoSink(object):
     Useful for testing/debugging...
 
     """
+
     def __init__(self, fobj):
         self._fobj = fobj
 
@@ -87,12 +88,13 @@ class StreamDHCPInfoSink(object):
         self._fobj.write(str(dhcp_info) + '\n')
 
 
-class ProvServerDHCPInfoSink(object):
+class ProvServerDHCPInfoSink:
     """A destination for DHCP information objects.
 
     Send the DHCP information to a provisioning server via its REST API.
 
     """
+
     def __init__(self, provd_client):
         self._provd_client = provd_client
 
@@ -108,17 +110,18 @@ class ProvServerDHCPInfoSink(object):
             self._do_push(dhcp_info)
         except ProvdError:
             raise
-        except Exception, e:
+        except Exception as e:
             # XXX we are wrapping a bit too much
             raise DHCPInfoSinkError(e)
 
 
-class UnixSocketDHCPInfoSource(object):
+class UnixSocketDHCPInfoSource:
     """A source of DHCP information objects.
 
     Use a Unix datagram socket to get DHCP information.
 
     """
+
     def __init__(self, ctl_file, remove_file=False):
         """Create a new source.
 
@@ -129,7 +132,7 @@ class UnixSocketDHCPInfoSource(object):
         if remove_file:
             try:
                 os.remove(ctl_file)
-            except OSError, e:
+            except OSError:
                 pass
         self._ctl_file = ctl_file
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -181,17 +184,19 @@ class UnixSocketDHCPInfoSource(object):
         """
         lines = filter(None, data.split('\n'))
         dhcp_info = {}
+
         def check_and_add(key, value):
             check_fun = getattr(self, '_check_' + key)
             check_fun(value)
             dhcp_info[key] = value
+
         try:
             check_and_add('op', lines[0])
             check_and_add('ip', lines[1])
             if dhcp_info['op'] == 'commit':
                 check_and_add('mac', lines[2])
                 check_and_add('options', lines[3:])
-        except IndexError, e:
+        except IndexError as e:
             raise DHCPInfoSourceError(e)
         else:
             return dhcp_info
@@ -208,11 +213,12 @@ class UnixSocketDHCPInfoSource(object):
         return dhcp_info
 
 
-class Agent(object):
+class Agent:
     """An agent that reads DHCP info from a source and send it to a sink in
     a loop.
 
     """
+
     def __init__(self, source, sink):
         """Create an agent."""
         self._source = source
@@ -226,19 +232,19 @@ class Agent(object):
                 logger.info("Pulled DHCP info: (%(op)s, %(ip)s)", dhcp_info)
                 logger.debug('DHCP info: %s', dhcp_info)
                 self._sink.push(dhcp_info)
-            except DHCPInfoSourceError, e:
+            except DHCPInfoSourceError as e:
                 logger.error('Error while pulling info from source: %s', e)
-            except DHCPInfoSinkError, e:
+            except DHCPInfoSinkError as e:
                 logger.error('Error while pushing info to sink: %s', e.message)
-            except Exception, e:
+            except Exception:
                 logger.exception('Unspecified exception')
 
 
-class PidFile(object):
+class PidFile:
     def _remove_stale_pid_file(self):
         try:
             fobj = open(self._pid_file)
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 # pidfile doesn't exist -- do nothing
                 pass
@@ -253,7 +259,7 @@ class PidFile(object):
             # with value 0 (see "man 2 kill" for more info).
             try:
                 os.kill(pid, 0)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.ESRCH:
                     # no such process -- remove stale pidfile
                     logger.info('Found stale pidfile %s, removing it', self._pid_file)
@@ -268,7 +274,7 @@ class PidFile(object):
         tmp_pid_file = self._pid_file + '.' + str(pid)
         try:
             fpid = open(tmp_pid_file, 'w')
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             raise PidFileError("couldn't create tmp pid file: %s" % e)
         else:
             try:
@@ -277,7 +283,7 @@ class PidFile(object):
                 fpid.close()
             try:
                 os.link(tmp_pid_file, self._pid_file)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 raise PidFileError("couldn't create pid file: %s" % e)
             finally:
                 os.unlink(tmp_pid_file)
@@ -313,8 +319,12 @@ def _read_config():
 
 def _load_key_file(config):
     key_file = parse_config_file(config['auth']['key_file'])
-    return {'auth': {'username': key_file.get('service_id'),
-                     'password': key_file.get('service_key')}}
+    return {
+        'auth': {
+            'username': key_file.get('service_id'),
+            'password': key_file.get('service_key'),
+        }
+    }
 
 
 def _remove(file):
@@ -372,7 +382,3 @@ def main():
                 pidfile.close()
         finally:
             sink.close()
-
-
-if __name__ == '__main__':
-    main()
