@@ -50,17 +50,19 @@ DEFAULT_CONFIG = {
         'prefix': None,
         'https': False,
         'key_file': '/var/lib/wazo-auth-keys/wazo-dxtora-key.yml',
-    }
+    },
 }
 
 
 class DHCPInfoSourceError(Exception):
     """Raised if there's an error while pulling DHCP information."""
+
     pass
 
 
 class DHCPInfoSinkError(Exception):
     """Raised if there's an error while pushing DHCP information."""
+
     pass
 
 
@@ -76,6 +78,7 @@ class StreamDHCPInfoSink:
     Useful for testing/debugging...
 
     """
+
     def __init__(self, fobj):
         self._fobj = fobj
 
@@ -92,6 +95,7 @@ class ProvServerDHCPInfoSink:
     Send the DHCP information to a provisioning server via its REST API.
 
     """
+
     def __init__(self, provd_client):
         self._provd_client = provd_client
 
@@ -118,6 +122,7 @@ class UnixSocketDHCPInfoSource:
     Use a Unix datagram socket to get DHCP information.
 
     """
+
     def __init__(self, ctl_file, remove_file=False):
         """Create a new source.
 
@@ -214,6 +219,7 @@ class Agent:
     a loop.
 
     """
+
     def __init__(self, source, sink):
         """Create an agent."""
         self._source = source
@@ -314,8 +320,12 @@ def _read_config():
 
 def _load_key_file(config):
     key_file = parse_config_file(config['auth']['key_file'])
-    return {'auth': {'username': key_file.get('service_id'),
-                     'password': key_file.get('service_key')}}
+    return {
+        'auth': {
+            'username': key_file.get('service_id'),
+            'password': key_file.get('service_key'),
+        }
+    }
 
 
 def _remove(file):
