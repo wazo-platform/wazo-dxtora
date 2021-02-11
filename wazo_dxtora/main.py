@@ -182,7 +182,7 @@ class UnixSocketDHCPInfoSource:
         dict ('op', 'ip', 'mac' and 'options').
 
         """
-        lines = filter(None, data.split('\n'))
+        lines = list(filter(None, data.decode('utf-8').split('\n')))
         dhcp_info = {}
 
         def check_and_add(key, value):
