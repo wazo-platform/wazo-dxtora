@@ -235,7 +235,7 @@ class Agent:
             except DHCPInfoSourceError as e:
                 logger.error('Error while pulling info from source: %s', e)
             except DHCPInfoSinkError as e:
-                logger.error('Error while pushing info to sink: %s', e.message)
+                logger.error('Error while pushing info to sink: %s', e)
             except Exception:
                 logger.exception('Unspecified exception')
 
