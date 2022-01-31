@@ -1,36 +1,28 @@
-## Image to build from sources
-
-FROM debian:buster
+FROM python:3.7-slim-buster AS compile-image
 LABEL maintainer="Wazo Maintainers <dev@wazo.community>"
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV HOME /root
+RUN python -m venv /opt/venv
+# Activate virtual env
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Add dependencies
-RUN apt-get -qq update
-RUN apt-get -qq -y install \
-    git \
-    apt-utils \
-    python3-pip \
-    python3-dev
+WORKDIR /usr/src/wazo-dxtora
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-# Install wazo-dxtora
-ADD . /usr/src/dxtora
-WORKDIR /usr/src/dxtora
-RUN pip3 install -r requirements.txt
-RUN python3 setup.py install
+COPY setup.py setup.py
+COPY wazo_dxtora wazo_dxtora
+RUN python setup.py install
 
-# Configure environment
-RUN mkdir /var/lib/wazo-dxtora \
-    && touch /var/log/wazo-dxtora.log \
-    && adduser --quiet --system --group --no-create-home wazo-dxtora \
-    && chown wazo-dxtora:wazo-dxtora /var/log/wazo-dxtora.log \
-    && install -d -o wazo-dxtora -g wazo-dxtora /run/wazo-dxtora \
-    && cp -r etc/wazo-dxtora /etc
+FROM python:3.7-slim-buster AS build-image
+COPY --from=compile-image /opt/venv /opt/venv
 
-# Clean
-WORKDIR /root
-RUN rm -rf /usr/src/dxtora
-RUN apt-get clean
+COPY ./etc/wazo-dxtora /etc/wazo-dxtora
 
+RUN true \
+    && adduser --quiet --system --group --home /var/lib/wazo-dxtora wazo-dxtora \
+    && install -o wazo-dxtora -g wazo-dxtora /dev/null /var/log/wazo-dxtora.log \
+    && install -d -o wazo-dxtora -g wazo-dxtora /run/wazo-dxtora
+
+# Activate virtual env
+ENV PATH="/opt/venv/bin:$PATH"
 CMD ["wazo-dxtora"]
