@@ -2,4 +2,4 @@ https://github.com/wazo-platform/wazo-lib-rest-client/archive/master.zip
 https://github.com/wazo-platform/wazo-auth-client/archive/master.zip
 https://github.com/wazo-platform/wazo-provd-client/archive/master.zip
 https://github.com/wazo-platform/xivo-lib-python/archive/master.zip
-pyyaml==3.13  # from xivo-lib-python
+pyyaml==5.4  # from xivo-lib-python
