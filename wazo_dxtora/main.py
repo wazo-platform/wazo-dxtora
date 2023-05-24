@@ -1,4 +1,4 @@
-# Copyright 2010-2021 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2010-2023 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Small daemon program that is used to push DHCP information to a
@@ -138,7 +138,7 @@ class UnixSocketDHCPInfoSource:
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         try:
             self._sock.bind(ctl_file)
-        except socket.error:
+        except OSError:
             self._sock.close()
             raise
 
@@ -156,7 +156,7 @@ class UnixSocketDHCPInfoSource:
         try:
             # Note that inet_aton accept strings with less than three dots.
             socket.inet_aton(ip)
-        except socket.error:
+        except OSError:
             raise DHCPInfoSourceError("invalid 'ip' value: %s" % ip)
 
     def _check_mac(self, mac):
@@ -244,7 +244,7 @@ class PidFile:
     def _remove_stale_pid_file(self):
         try:
             fobj = open(self._pid_file)
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 # pidfile doesn't exist -- do nothing
                 pass
@@ -274,7 +274,7 @@ class PidFile:
         tmp_pid_file = self._pid_file + '.' + str(pid)
         try:
             fpid = open(tmp_pid_file, 'w')
-        except EnvironmentError as e:
+        except OSError as e:
             raise PidFileError("couldn't create tmp pid file: %s" % e)
         else:
             try:
@@ -283,7 +283,7 @@ class PidFile:
                 fpid.close()
             try:
                 os.link(tmp_pid_file, self._pid_file)
-            except EnvironmentError as e:
+            except OSError as e:
                 raise PidFileError("couldn't create pid file: %s" % e)
             finally:
                 os.unlink(tmp_pid_file)
@@ -335,7 +335,7 @@ def _remove(file):
     finally:
         try:
             os.remove(file)
-        except EnvironmentError:
+        except OSError:
             pass
 
 
