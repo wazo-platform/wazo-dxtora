@@ -1,5 +1,3 @@
 *.egg-info
 *.pyc
 .tox
-pycodestyle.txt
-pylint.txt
