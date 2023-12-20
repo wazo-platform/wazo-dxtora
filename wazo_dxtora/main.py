@@ -16,15 +16,14 @@ import signal
 import socket
 import sys
 
+from wazo_auth_client import Client as AuthClient
+from wazo_provd_client import Client as ProvdClient
+from wazo_provd_client.exceptions import ProvdError
 from xivo.chain_map import ChainMap
 from xivo.config_helper import parse_config_file, read_config_file_hierarchy
 from xivo.token_renewer import TokenRenewer
 from xivo.user_rights import change_user
 from xivo.xivo_logging import setup_logging
-
-from wazo_auth_client import Client as AuthClient
-from wazo_provd_client import Client as ProvdClient
-from wazo_provd_client.exceptions import ProvdError
 
 logger = logging.getLogger('wazo-dxtora')
 
