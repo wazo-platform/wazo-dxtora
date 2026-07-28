@@ -1,4 +1,4 @@
-# Copyright 2010-2023 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2010-2026 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Small daemon program that is used to push DHCP information to a
@@ -44,8 +44,7 @@ DEFAULT_CONFIG = {
     },
     'auth': {
         'host': 'localhost',
-        'port': 9497,
-        'prefix': None,
+        'port': 80,
         'https': False,
         'key_file': '/var/lib/wazo-auth-keys/wazo-dxtora-key.yml',
     },
